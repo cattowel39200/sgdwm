@@ -604,6 +604,7 @@
       <button class="nav-link" data-page="calculator">비용 계산기</button>
       <button class="nav-link" data-page="timeline">선거 일정</button>
       <button class="nav-link" data-page="regulations">선거운동 규정</button>
+      <button class="nav-link" data-page="analyzer">🔍 적법성 분석</button>
       <button class="nav-link" data-page="pledge">공약 작성</button>
       <button class="nav-link" data-page="checklist">준비 체크리스트</button>
       <button class="nav-link" data-page="pricing">💎 요금제</button>
@@ -683,7 +684,7 @@
         <div class="form-row">
           <div class="form-group">
             <label>출마 예정 선거</label>
-            <select id="regElecType">
+            <select id="regElecType" onchange="onRegSigunguChange()">
               <option value="">-- 선택 (선택사항) --</option>
               <option value="city_council">기초의원 (시·군·구의회)</option>
               <option value="metro_council">광역의원 (시·도의회)</option>
@@ -721,9 +722,22 @@
           </div>
           <div class="form-group">
             <label>시·군·구</label>
-            <select id="regSigungu">
+            <select id="regSigungu" onchange="onRegSigunguChange()">
               <option value="">-- 선택 --</option>
             </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label id="regDistrictLabel">선거구</label>
+            <select id="regDistrict" onchange="onRegDistrictChange()">
+              <option value="">-- 선거구 선택 --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>예상 선거구 인구수</label>
+            <input type="text" id="regPopPreview" readonly style="background:var(--gray-50);color:var(--gray-600);" placeholder="선거구 선택 시 자동 표시">
           </div>
         </div>
 
@@ -1729,98 +1743,164 @@
   <!-- 상세 패널 -->
   <div id="regDetailPanel"></div>
 
-  <!-- ====== 적법성 분석기 ====== -->
-  <div class="analyzer-section">
-    <div class="analyzer-card">
-      <div class="analyzer-header">
-        <span style="font-size:28px;">🔍</span>
-        <div>
-          <h3>선거운동 적법성 분석기</h3>
-          <p style="font-size:13px; opacity:0.85; margin-top:2px;">문자메시지, 홍보 문구, 이미지 내용을 입력하면 공직선거법 위반 여부를 분석합니다.</p>
-        </div>
+  <div class="law-note" style="margin-top:24px;">
+    <strong>유의사항</strong> — 본 안내는 공직선거법의 주요 규정을 요약한 것으로, 구체적인 사안에 대해서는 반드시 관할 선거관리위원회에 문의하시기 바랍니다. 법 개정에 따라 내용이 변경될 수 있습니다.<br>
+    <strong>선거법 위반 신고:</strong> 중앙선거관리위원회 ☎ 1390
+  </div>
+  <div style="margin-top:16px; text-align:center;">
+    <button class="btn btn-primary" onclick="showPage('analyzer')" style="gap:8px;">🔍 적법성 분석기로 이동</button>
+  </div>
+</div>
+
+<!-- ==================== 적법성 분석기 (별도 페이지) ==================== -->
+<div id="page-analyzer" class="page">
+  <h2 style="font-size:24px; margin-bottom:8px;">🔍 선거운동 적법성 분석기</h2>
+  <p style="color:var(--gray-500); margin-bottom:24px;">문자메시지, 홍보 문구, 이미지, PDF 문서를 입력하면 공직선거법 위반 여부를 분석합니다.</p>
+
+  <div class="analyzer-card">
+    <div class="analyzer-header">
+      <span style="font-size:28px;">🔍</span>
+      <div>
+        <h3>적법성 분석기</h3>
+        <p style="font-size:13px; opacity:0.85; margin-top:2px;">텍스트·이미지·PDF를 분석하여 공직선거법 위반 가능성을 판별합니다.</p>
       </div>
-      <div class="analyzer-body">
-        <!-- 탭 -->
-        <div class="analyzer-tabs">
-          <button class="analyzer-tab active" onclick="switchAnalyzerTab('text')">📝 문자·텍스트 분석</button>
-          <button class="analyzer-tab" onclick="switchAnalyzerTab('image')">🖼️ 이미지 분석</button>
-        </div>
+    </div>
+    <div class="analyzer-body">
+      <!-- 탭 (3개: 텍스트, 이미지, PDF) -->
+      <div class="analyzer-tabs">
+        <button class="analyzer-tab active" onclick="switchAnalyzerTab('text')">📝 텍스트</button>
+        <button class="analyzer-tab" onclick="switchAnalyzerTab('image')">🖼️ 이미지</button>
+        <button class="analyzer-tab" onclick="switchAnalyzerTab('pdf')">📄 PDF</button>
+      </div>
 
-        <!-- 텍스트 입력 -->
-        <div id="analyzerTextArea">
-          <textarea class="analyzer-textarea" id="analyzerText" placeholder="분석할 문자메시지, SNS 글, 홍보 문구 등을 입력하세요.&#10;&#10;예시:&#10;• 문자메시지: &quot;○○○ 후보를 지지해 주세요! 기호 1번&quot;&#10;• SNS 글: &quot;이번 선거에서 우리 동네를 바꿀 분은...&quot;&#10;• 현수막 문구: &quot;○○○와 함께하는 밝은 미래&quot;"></textarea>
-          <div class="analyzer-examples">
-            <details>
-              <summary>💡 예시 문구 선택하기</summary>
-              <div class="example-chips">
-                <span class="example-chip" onclick="setAnalyzerExample(0)">📱 선거일 투표독려 문자</span>
-                <span class="example-chip" onclick="setAnalyzerExample(1)">📱 후보 지지 요청 문자</span>
-                <span class="example-chip" onclick="setAnalyzerExample(2)">🌐 SNS 후보 홍보글</span>
-                <span class="example-chip" onclick="setAnalyzerExample(3)">📋 현수막 문구</span>
-                <span class="example-chip" onclick="setAnalyzerExample(4)">🎁 당선 축하 문자</span>
-                <span class="example-chip" onclick="setAnalyzerExample(5)">☎️ 사전선거운동 문자</span>
-                <span class="example-chip" onclick="setAnalyzerExample(6)">📝 정당 활동 안내</span>
-                <span class="example-chip" onclick="setAnalyzerExample(7)">⚠️ 허위사실 유포</span>
-              </div>
-            </details>
-          </div>
-        </div>
-
-        <!-- 이미지 입력 -->
-        <div id="analyzerImageArea" style="display:none;">
-          <div class="analyzer-img-area" id="analyzerImgDrop" onclick="document.getElementById('analyzerImgInput').click()">
-            <div class="analyzer-img-text" id="analyzerImgPlaceholder">
-              <span class="big">📷</span>
-              이미지를 클릭하여 선택하거나 여기에 드래그하세요<br>
-              <span style="font-size:12px; color:var(--gray-500);">(선거 홍보물, 현수막, 명함, SNS 게시물 등)</span>
+      <!-- 텍스트 입력 -->
+      <div id="analyzerTextArea">
+        <textarea class="analyzer-textarea" id="analyzerText" placeholder="분석할 문자메시지, SNS 글, 홍보 문구 등을 입력하세요.&#10;&#10;예시:&#10;• 문자메시지: &quot;○○○ 후보를 지지해 주세요! 기호 1번&quot;&#10;• SNS 글: &quot;이번 선거에서 우리 동네를 바꿀 분은...&quot;&#10;• 현수막 문구: &quot;○○○와 함께하는 밝은 미래&quot;"></textarea>
+        <div class="analyzer-examples">
+          <details>
+            <summary>💡 예시 문구 선택하기</summary>
+            <div class="example-chips">
+              <span class="example-chip" onclick="setAnalyzerExample(0)">📱 선거일 투표독려 문자</span>
+              <span class="example-chip" onclick="setAnalyzerExample(1)">📱 후보 지지 요청 문자</span>
+              <span class="example-chip" onclick="setAnalyzerExample(2)">🌐 SNS 후보 홍보글</span>
+              <span class="example-chip" onclick="setAnalyzerExample(3)">📋 현수막 문구</span>
+              <span class="example-chip" onclick="setAnalyzerExample(4)">🎁 당선 축하 문자</span>
+              <span class="example-chip" onclick="setAnalyzerExample(5)">☎️ 사전선거운동 문자</span>
+              <span class="example-chip" onclick="setAnalyzerExample(6)">📝 정당 활동 안내</span>
+              <span class="example-chip" onclick="setAnalyzerExample(7)">⚠️ 허위사실 유포</span>
             </div>
-            <img id="analyzerImgPreview" class="analyzer-img-preview" style="display:none;">
-            <input type="file" id="analyzerImgInput" accept="image/*" style="display:none;" onchange="handleAnalyzerImage(event)">
-          </div>
-          <div class="form-group" style="margin-top:12px;">
-            <label>이미지에 포함된 텍스트 (수동 입력)</label>
-            <textarea class="analyzer-textarea" id="analyzerImgText" style="min-height:80px;" placeholder="이미지에 포함된 문구를 직접 입력해주세요.&#10;&#10;예: &quot;기호 1번 ○○○, 일 잘하는 시의원&quot;"></textarea>
-          </div>
-          <div class="form-group">
-            <label>이미지 유형</label>
-            <select id="analyzerImgType">
-              <option value="poster">현수막·벽보</option>
-              <option value="flyer">전단·홍보물</option>
-              <option value="namecard">명함</option>
-              <option value="sns">SNS 게시물·카드뉴스</option>
-              <option value="ad">인터넷 배너·광고</option>
-              <option value="other">기타</option>
-            </select>
-          </div>
+          </details>
         </div>
-
-        <!-- 분석 옵션 -->
-        <div class="analyzer-options">
-          <label>분석 기준 시점:</label>
-          <select id="analyzerPeriod">
-            <option value="auto">자동 (현재 선택된 기간)</option>
-            <option value="normal">비선거기간</option>
-            <option value="pre">예비후보자 기간</option>
-            <option value="main">본선거 기간</option>
-          </select>
-          <label style="margin-left:8px;">선거 유형:</label>
-          <select id="analyzerElecType">
-            <option value="local">지방선거</option>
-            <option value="assembly">국회의원선거</option>
-            <option value="president">대통령선거</option>
-          </select>
-        </div>
-
-        <button class="analyzer-btn" onclick="runAnalysis()">🔍 적법성 분석하기</button>
-
-        <!-- 분석 결과 -->
-        <div class="analyzer-result" id="analyzerResult"></div>
       </div>
+
+      <!-- 이미지 입력 -->
+      <div id="analyzerImageArea" style="display:none;">
+        <div class="analyzer-img-area" id="analyzerImgDrop" onclick="document.getElementById('analyzerImgInput').click()">
+          <div class="analyzer-img-text" id="analyzerImgPlaceholder">
+            <span class="big">📷</span>
+            이미지를 클릭하여 선택하거나 여기에 드래그하세요<br>
+            <span style="font-size:12px; color:var(--gray-500);">(선거 홍보물, 현수막, 명함, SNS 게시물 등)</span>
+          </div>
+          <img id="analyzerImgPreview" class="analyzer-img-preview" style="display:none;">
+          <input type="file" id="analyzerImgInput" accept="image/*" style="display:none;" onchange="handleAnalyzerImage(event)">
+        </div>
+        <div class="form-group" style="margin-top:12px;">
+          <label>이미지에 포함된 텍스트 (수동 입력)</label>
+          <textarea class="analyzer-textarea" id="analyzerImgText" style="min-height:80px;" placeholder="이미지에 포함된 문구를 직접 입력해주세요.&#10;&#10;예: &quot;기호 1번 ○○○, 일 잘하는 시의원&quot;"></textarea>
+        </div>
+        <div class="form-group">
+          <label>이미지 유형</label>
+          <select id="analyzerImgType">
+            <option value="poster">현수막·벽보</option>
+            <option value="flyer">전단·홍보물</option>
+            <option value="namecard">명함</option>
+            <option value="sns">SNS 게시물·카드뉴스</option>
+            <option value="ad">인터넷 배너·광고</option>
+            <option value="other">기타</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- PDF 입력 -->
+      <div id="analyzerPdfArea" style="display:none;">
+        <div class="analyzer-img-area" id="analyzerPdfDrop" onclick="document.getElementById('analyzerPdfInput').click()">
+          <div class="analyzer-img-text" id="analyzerPdfPlaceholder">
+            <span class="big">📄</span>
+            PDF 파일을 클릭하여 선택하거나 여기에 드래그하세요<br>
+            <span style="font-size:12px; color:var(--gray-500);">(선거 공보물, 정책자료, 홍보 리플렛, 선관위 안내문 등)</span>
+          </div>
+          <input type="file" id="analyzerPdfInput" accept=".pdf,application/pdf" style="display:none;" onchange="handleAnalyzerPdf(event)">
+        </div>
+        <div id="analyzerPdfInfo" style="display:none; margin-top:12px;">
+          <div class="card" style="padding:14px; background:var(--gray-50);">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+              <span style="font-size:24px;">📄</span>
+              <div>
+                <div id="analyzerPdfName" style="font-weight:700; font-size:14px;"></div>
+                <div id="analyzerPdfMeta" style="font-size:12px; color:var(--gray-500);"></div>
+              </div>
+              <button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="clearAnalyzerPdf()">✕ 제거</button>
+            </div>
+            <div id="analyzerPdfProgress" style="display:none;">
+              <div class="progress-bar" style="margin-bottom:4px;">
+                <div class="progress-fill" id="analyzerPdfProgressBar" style="width:0%;"></div>
+              </div>
+              <div id="analyzerPdfProgressText" style="font-size:11px; color:var(--gray-500);">텍스트 추출 중...</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:12px;">
+          <label>PDF에서 추출된 텍스트 <span style="font-size:11px; color:var(--gray-500);">(자동 추출 · 수정 가능)</span></label>
+          <textarea class="analyzer-textarea" id="analyzerPdfText" style="min-height:120px;" placeholder="PDF를 업로드하면 텍스트가 자동 추출됩니다.&#10;&#10;추출이 불완전한 경우 수동으로 편집할 수 있습니다."></textarea>
+        </div>
+        <div class="form-group">
+          <label>문서 유형</label>
+          <select id="analyzerPdfDocType">
+            <option value="flyer">선거 공보물·전단</option>
+            <option value="policy">정책 자료·공약집</option>
+            <option value="poster">현수막·벽보 시안</option>
+            <option value="letter">유권자 서한</option>
+            <option value="press">보도자료·언론 배포문</option>
+            <option value="sns">SNS 콘텐츠 시안</option>
+            <option value="other">기타</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 분석 옵션 -->
+      <div class="analyzer-options">
+        <label>분석 기준 시점:</label>
+        <select id="analyzerPeriod">
+          <option value="auto">자동 (현재 선택된 기간)</option>
+          <option value="normal">비선거기간</option>
+          <option value="pre">예비후보자 기간</option>
+          <option value="main">본선거 기간</option>
+        </select>
+        <label style="margin-left:8px;">선거 유형:</label>
+        <select id="analyzerElecType">
+          <option value="local">지방선거</option>
+          <option value="assembly">국회의원선거</option>
+          <option value="president">대통령선거</option>
+        </select>
+      </div>
+
+      <button class="analyzer-btn" onclick="runAnalysis()">🔍 적법성 분석하기</button>
+
+      <!-- 분석 결과 -->
+      <div class="analyzer-result" id="analyzerResult"></div>
+    </div>
+  </div>
+
+  <!-- 분석 이력 -->
+  <div class="card" style="margin-top:24px;">
+    <div class="card-title">📋 최근 분석 이력</div>
+    <div id="analyzerHistory">
+      <p style="color:var(--gray-500); font-size:14px;">분석 결과가 여기에 표시됩니다.</p>
     </div>
   </div>
 
   <div class="law-note" style="margin-top:24px;">
-    <strong>유의사항</strong> — 본 안내는 공직선거법의 주요 규정을 요약한 것으로, 구체적인 사안에 대해서는 반드시 관할 선거관리위원회에 문의하시기 바랍니다. 법 개정에 따라 내용이 변경될 수 있습니다.<br>
+    <strong>유의사항</strong> — 본 분석은 키워드 기반 자동 분석 결과이며, 법률 전문가의 의견을 대체하지 않습니다. 구체적인 사안에 대해서는 반드시 관할 선거관리위원회에 문의하시기 바랍니다.<br>
     <strong>선거법 위반 신고:</strong> 중앙선거관리위원회 ☎ 1390
   </div>
 </div>
@@ -1935,6 +2015,14 @@
 </div>
 
 </div><!-- /container -->
+
+<!-- PDF.js CDN for PDF text extraction -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+</script>
 
 <script>
 // ========== NAVIGATION ==========
@@ -2289,6 +2377,81 @@ function onRegSidoChange() {
   if (sido && sidoData[sido]) {
     sidoData[sido].forEach(sg => sel.appendChild(new Option(sg, sg)));
   }
+  // 시군구 초기화 시 선거구도 초기화
+  const distSel = document.getElementById('regDistrict');
+  if (distSel) distSel.innerHTML = '<option value="">-- 선거구 선택 --</option>';
+  const popPrev = document.getElementById('regPopPreview');
+  if (popPrev) popPrev.value = '';
+}
+
+function onRegSigunguChange() {
+  const sido = document.getElementById('regSido')?.value;
+  const sigungu = document.getElementById('regSigungu')?.value;
+  const elType = document.getElementById('regElecType')?.value;
+  const sel = document.getElementById('regDistrict');
+  const label = document.getElementById('regDistrictLabel');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- 선거구 선택 --</option>';
+  const popPrev = document.getElementById('regPopPreview');
+  if (popPrev) popPrev.value = '';
+  if (!sigungu) return;
+
+  const labelMap = {
+    assembly: '국회의원 선거구', city_council: '기초의원 선거구',
+    metro_council: '광역의원 선거구', city_mayor: '기초단체장 선거구',
+    governor: '광역단체장 선거구', president: '대통령 선거구'
+  };
+  if (label) label.textContent = labelMap[elType] || '선거구';
+
+  const key = sido + '|' + sigungu;
+  const info = typeof districtInfo !== 'undefined' ? districtInfo[key] : null;
+  const names = ['가','나','다','라','마','바','사','아','자','차','카','타','파','하','거','너','더','러'];
+
+  if (elType === 'assembly') {
+    if (info && info.assembly) {
+      info.assembly.forEach(d => sel.innerHTML += `<option value="${d}">${d}</option>`);
+    } else {
+      sel.innerHTML += `<option value="${sigungu}">${sigungu}</option>`;
+    }
+  } else if (elType === 'city_council') {
+    const count = (info && info.basic > 0) ? info.basic : 5;
+    for (let i = 0; i < count; i++) sel.innerHTML += `<option value="${sigungu} ${names[i]}">${sigungu} ${names[i]}선거구</option>`;
+  } else if (elType === 'metro_council') {
+    const count = (info && info.metro > 0) ? info.metro : 2;
+    for (let i = 1; i <= count; i++) sel.innerHTML += `<option value="${sigungu} 제${i}선거구">${sigungu} 제${i}선거구</option>`;
+  } else if (elType === 'city_mayor') {
+    sel.innerHTML += `<option value="${sigungu}">${sigungu} (단일 선거구)</option>`;
+  } else if (elType === 'governor') {
+    sel.innerHTML = `<option value="${sido}">${sido} (단일 선거구)</option>`;
+  } else if (elType === 'president') {
+    sel.innerHTML = `<option value="전국">전국 (단일 선거구)</option>`;
+  } else {
+    const count = (info && info.basic > 0) ? info.basic : 5;
+    for (let i = 0; i < count; i++) sel.innerHTML += `<option value="${sigungu} ${names[i]}">${sigungu} ${names[i]}선거구</option>`;
+  }
+}
+
+function onRegDistrictChange() {
+  const sido = document.getElementById('regSido')?.value;
+  const sigungu = document.getElementById('regSigungu')?.value;
+  const elType = document.getElementById('regElecType')?.value;
+  const district = document.getElementById('regDistrict')?.value;
+  const popPrev = document.getElementById('regPopPreview');
+  if (!popPrev || !district) { if (popPrev) popPrev.value = ''; return; }
+
+  const key = sido + '|' + sigungu;
+  const info = typeof districtInfo !== 'undefined' ? districtInfo[key] : null;
+  if (!info || !info.pop) { popPrev.value = ''; return; }
+
+  let estPop = 0;
+  if (elType === 'president') estPop = 51210000;
+  else if (elType === 'governor') estPop = (typeof sidoPopulation !== 'undefined' ? sidoPopulation[sido] : 0) || 0;
+  else if (elType === 'city_mayor') estPop = info.pop;
+  else if (elType === 'assembly') { const cnt = info.assembly ? info.assembly.length : 1; estPop = Math.round(info.pop / cnt); }
+  else if (elType === 'city_council') { const cnt = info.basic > 0 ? info.basic : 1; estPop = Math.round(info.pop / cnt); }
+  else if (elType === 'metro_council') { const cnt = info.metro > 0 ? info.metro : 1; estPop = Math.round(info.pop / cnt); }
+
+  popPrev.value = estPop > 0 ? estPop.toLocaleString() + '명 (추정)' : '';
 }
 
 function formatPhone(el) {
@@ -2345,6 +2508,7 @@ function doRegister() {
   const party = document.getElementById('regParty').value;
   const sido = document.getElementById('regSido').value;
   const sigungu = document.getElementById('regSigungu').value;
+  const regDistrict = document.getElementById('regDistrict')?.value || '';
   const terms = document.getElementById('regTerms').checked;
 
   // 유효성 검사
@@ -2374,7 +2538,7 @@ function doRegister() {
 
   const user = {
     name, email, phone, pw: hashPasswordSync(pw), role,
-    elecType, party, sido, sigungu,
+    elecType, party, sido, sigungu, district: regDistrict,
     campId: role === 'candidate' ? email : (campOwner ? campOwner.email : null),
     inviteCode: role === 'candidate' ? generateInviteCode() : null,
     createdAt: new Date().toISOString()
@@ -2390,7 +2554,26 @@ function doRegister() {
   applyPartyTheme(party);
 
   if (elecType) {
-    localStorage.setItem('electionProfile', JSON.stringify({ type: elecType, sido, sigungu }));
+    // 선거구 인구수/읍면동수 자동 산출
+    let regPop = 0, regEmd = 0;
+    if (regDistrict && sido && sigungu) {
+      const key = sido + '|' + sigungu;
+      const info = typeof districtInfo !== 'undefined' ? districtInfo[key] : null;
+      if (info && info.pop) {
+        if (elecType === 'president') { regPop = 51210000; regEmd = 3551; }
+        else if (elecType === 'governor') { regPop = (typeof sidoPopulation !== 'undefined' ? sidoPopulation[sido] : 0) || 0; Object.keys(districtInfo).forEach(k => { if (k.startsWith(sido + '|')) regEmd += districtInfo[k].emd; }); }
+        else if (elecType === 'city_mayor') { regPop = info.pop; regEmd = info.emd; }
+        else if (elecType === 'assembly') { const cnt = info.assembly ? info.assembly.length : 1; regPop = Math.round(info.pop / cnt); regEmd = Math.round(info.emd / cnt); }
+        else if (elecType === 'city_council') { const cnt = info.basic > 0 ? info.basic : 1; regPop = Math.round(info.pop / cnt); regEmd = Math.max(1, Math.round(info.emd / cnt)); }
+        else if (elecType === 'metro_council') { const cnt = info.metro > 0 ? info.metro : 1; regPop = Math.round(info.pop / cnt); regEmd = Math.max(1, Math.round(info.emd / cnt)); }
+      }
+    }
+    localStorage.setItem('electionProfile', JSON.stringify({
+      type: elecType, sido, sigungu,
+      district: regDistrict,
+      population: regPop || '',
+      emd: regEmd || ''
+    }));
   }
 
   const rc = roleConfig[role];
@@ -4625,6 +4808,8 @@ function switchAnalyzerTab(tab) {
   event.target.closest('.analyzer-tab').classList.add('active');
   document.getElementById('analyzerTextArea').style.display = tab === 'text' ? 'block' : 'none';
   document.getElementById('analyzerImageArea').style.display = tab === 'image' ? 'block' : 'none';
+  const pdfArea = document.getElementById('analyzerPdfArea');
+  if (pdfArea) pdfArea.style.display = tab === 'pdf' ? 'block' : 'none';
   document.getElementById('analyzerResult').classList.remove('show');
 }
 
@@ -4648,6 +4833,147 @@ function handleAnalyzerImage(event) {
   };
   reader.readAsDataURL(file);
 }
+
+// ====== PDF 처리 ======
+let analyzerPdfFile = null;
+
+function handleAnalyzerPdf(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+    alert('PDF 파일만 업로드할 수 있습니다.');
+    return;
+  }
+  if (file.size > 20 * 1024 * 1024) {
+    alert('파일 크기가 너무 큽니다. 20MB 이하의 PDF만 지원합니다.');
+    return;
+  }
+  analyzerPdfFile = file;
+
+  // UI 업데이트
+  document.getElementById('analyzerPdfPlaceholder').style.display = 'none';
+  document.getElementById('analyzerPdfDrop').classList.add('has-image');
+  document.getElementById('analyzerPdfInfo').style.display = 'block';
+  document.getElementById('analyzerPdfName').textContent = file.name;
+  document.getElementById('analyzerPdfMeta').textContent = `${(file.size / 1024).toFixed(1)} KB`;
+
+  // PDF 텍스트 추출 시작
+  extractPdfText(file);
+}
+
+async function extractPdfText(file) {
+  const progressDiv = document.getElementById('analyzerPdfProgress');
+  const progressBar = document.getElementById('analyzerPdfProgressBar');
+  const progressText = document.getElementById('analyzerPdfProgressText');
+  const textArea = document.getElementById('analyzerPdfText');
+
+  progressDiv.style.display = 'block';
+  progressBar.style.width = '10%';
+  progressText.textContent = 'PDF 로딩 중...';
+  textArea.value = '';
+
+  try {
+    if (typeof pdfjsLib === 'undefined') {
+      throw new Error('PDF.js 라이브러리를 로드할 수 없습니다. 인터넷 연결을 확인해 주세요.');
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    progressBar.style.width = '25%';
+    progressText.textContent = 'PDF 파싱 중...';
+
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const totalPages = pdf.numPages;
+    document.getElementById('analyzerPdfMeta').textContent = `${(file.size / 1024).toFixed(1)} KB · ${totalPages}페이지`;
+
+    let fullText = '';
+    for (let i = 1; i <= totalPages; i++) {
+      progressBar.style.width = (25 + (i / totalPages) * 65) + '%';
+      progressText.textContent = `텍스트 추출 중... (${i}/${totalPages} 페이지)`;
+
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(item => item.str).join(' ');
+
+      if (pageText.trim()) {
+        fullText += (totalPages > 1 ? `[${i}페이지]\n` : '') + pageText.trim() + '\n\n';
+      }
+    }
+
+    progressBar.style.width = '100%';
+
+    if (fullText.trim()) {
+      textArea.value = fullText.trim();
+      progressText.textContent = `✅ ${totalPages}페이지에서 텍스트 추출 완료 (${fullText.length.toLocaleString()}자)`;
+      progressText.style.color = 'var(--success)';
+    } else {
+      textArea.value = '';
+      textArea.placeholder = '이 PDF에서 텍스트를 추출할 수 없습니다.\n스캔 이미지 PDF일 수 있습니다.\n\n텍스트를 수동으로 입력해 주세요.';
+      progressText.textContent = '⚠️ 텍스트를 추출할 수 없습니다 (스캔 이미지 PDF일 수 있음)';
+      progressText.style.color = 'var(--warning)';
+    }
+  } catch (err) {
+    progressBar.style.width = '100%';
+    progressBar.style.background = 'var(--danger)';
+    progressText.textContent = '❌ PDF 처리 오류: ' + err.message;
+    progressText.style.color = 'var(--danger)';
+    textArea.placeholder = 'PDF 처리 중 오류가 발생했습니다.\n텍스트를 수동으로 입력해 주세요.';
+  }
+}
+
+function clearAnalyzerPdf() {
+  analyzerPdfFile = null;
+  document.getElementById('analyzerPdfInput').value = '';
+  document.getElementById('analyzerPdfPlaceholder').style.display = 'block';
+  document.getElementById('analyzerPdfDrop').classList.remove('has-image');
+  document.getElementById('analyzerPdfInfo').style.display = 'none';
+  document.getElementById('analyzerPdfText').value = '';
+  document.getElementById('analyzerPdfProgress').style.display = 'none';
+  const pb = document.getElementById('analyzerPdfProgressBar');
+  if (pb) { pb.style.width = '0%'; pb.style.background = ''; }
+  const pt = document.getElementById('analyzerPdfProgressText');
+  if (pt) { pt.textContent = ''; pt.style.color = ''; }
+}
+
+// PDF 드래그앤드롭 설정
+document.addEventListener('DOMContentLoaded', function() {
+  const pdfDrop = document.getElementById('analyzerPdfDrop');
+  if (pdfDrop) {
+    pdfDrop.addEventListener('dragover', function(e) { e.preventDefault(); e.stopPropagation(); this.style.borderColor = 'var(--primary)'; this.style.background = 'var(--primary-light)'; });
+    pdfDrop.addEventListener('dragleave', function(e) { e.preventDefault(); e.stopPropagation(); this.style.borderColor = ''; this.style.background = ''; });
+    pdfDrop.addEventListener('drop', function(e) {
+      e.preventDefault(); e.stopPropagation();
+      this.style.borderColor = ''; this.style.background = '';
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && (files[0].type === 'application/pdf' || files[0].name.toLowerCase().endsWith('.pdf'))) {
+        const input = document.getElementById('analyzerPdfInput');
+        const dt = new DataTransfer();
+        dt.items.add(files[0]);
+        input.files = dt.files;
+        handleAnalyzerPdf({ target: input });
+      } else {
+        alert('PDF 파일만 업로드할 수 있습니다.');
+      }
+    });
+  }
+  // 이미지 드래그앤드롭도 설정
+  const imgDrop = document.getElementById('analyzerImgDrop');
+  if (imgDrop) {
+    imgDrop.addEventListener('dragover', function(e) { e.preventDefault(); e.stopPropagation(); this.style.borderColor = 'var(--primary)'; });
+    imgDrop.addEventListener('dragleave', function(e) { e.preventDefault(); e.stopPropagation(); this.style.borderColor = ''; });
+    imgDrop.addEventListener('drop', function(e) {
+      e.preventDefault(); e.stopPropagation();
+      this.style.borderColor = '';
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && files[0].type.startsWith('image/')) {
+        const input = document.getElementById('analyzerImgInput');
+        const dt = new DataTransfer();
+        dt.items.add(files[0]);
+        input.files = dt.files;
+        handleAnalyzerImage({ target: input });
+      }
+    });
+  }
+});
 
 // 분석 규칙 데이터베이스
 const analysisRules = [
@@ -4816,13 +5142,17 @@ function runAnalysis() {
 
   if (currentAnalyzerTab === 'text') {
     text = document.getElementById('analyzerText').value.trim();
+  } else if (currentAnalyzerTab === 'pdf') {
+    text = document.getElementById('analyzerPdfText').value.trim();
+    mediaType = document.getElementById('analyzerPdfDocType')?.value || 'other';
   } else {
     text = document.getElementById('analyzerImgText').value.trim();
     mediaType = document.getElementById('analyzerImgType').value;
   }
 
   if (!text) {
-    alert('분석할 내용을 입력해 주세요.');
+    const tabName = currentAnalyzerTab === 'pdf' ? 'PDF에서 추출된 텍스트가 없습니다. PDF를 업로드하거나 수동으로 텍스트를 입력해 주세요.' : '분석할 내용을 입력해 주세요.';
+    alert(tabName);
     return;
   }
 
@@ -4883,6 +5213,57 @@ function runAnalysis() {
     }
   }
 
+  // PDF 문서 유형별 추가 분석
+  if (currentAnalyzerTab === 'pdf') {
+    // PDF 문서 분량 정보
+    const pdfPages = analyzerPdfFile ? document.getElementById('analyzerPdfMeta')?.textContent : '';
+    const charCount = text.length;
+    issues.push({
+      id: 'pdf_info', cat: 'PDF 문서 분석', severity: 'info',
+      title: `PDF 문서 분석 완료 (${charCount.toLocaleString()}자 추출)`,
+      desc: `업로드된 PDF 문서${pdfPages ? ' (' + pdfPages + ')' : ''}에서 ${charCount.toLocaleString()}자의 텍스트를 추출하여 분석했습니다.`,
+      law: '참고사항', pen: '',
+      fix: 'PDF에서 자동 추출된 텍스트 기반 분석입니다. 이미지로 된 텍스트는 추출되지 않을 수 있으므로 원문을 함께 확인하세요.'
+    });
+    if (mediaType === 'flyer' || mediaType === 'policy') {
+      // 선거 공보물 필수 기재사항 체크
+      const hasCandidate = text.includes('기호') || text.includes('후보');
+      const hasParty = text.includes('당') || text.includes('정당') || text.includes('무소속');
+      if (hasCandidate && !text.includes('발행') && !text.includes('인쇄') && !text.includes('선관위')) {
+        issues.push({
+          id: 'pdf_print_info', cat: '인쇄물 표기사항', severity: 'warning',
+          title: '인쇄물 필수 표기사항 누락 가능성',
+          desc: '선거 인쇄물에는 인쇄소명, 인쇄인 성명, 인쇄일 등 필수 표기사항이 있습니다.',
+          law: '제65조(선거공보)·제68조의2', pen: '2년 이하 징역 또는 400만원 이하 벌금',
+          fix: '선거 인쇄물에는 ① 인쇄소의 명칭 및 소재지, ② 인쇄인의 성명, ③ 인쇄일을 반드시 기재하세요.'
+        });
+      }
+    }
+    if (mediaType === 'press') {
+      // 보도자료 관련 체크
+      if (text.includes('후보') && (text.includes('확인') || text.includes('밝혀') || text.includes('드러나'))) {
+        issues.push({
+          id: 'pdf_press', cat: '보도자료', severity: 'warning',
+          title: '보도자료 내용 적법성 확인 필요',
+          desc: '보도자료를 통해 타 후보에 대한 사실 적시 시 허위사실 공표죄에 해당할 수 있습니다.',
+          law: '제250조(허위사실공표죄)', pen: '5년 이하 징역 또는 3,000만원 이하 벌금',
+          fix: '보도자료에 포함된 사실관계는 반드시 검증 가능한 근거를 확보한 후 배포하세요.'
+        });
+      }
+    }
+    if (mediaType === 'letter') {
+      if (period === 'normal') {
+        issues.push({
+          id: 'pdf_letter', cat: '유권자 서한', severity: 'warning',
+          title: '비선거기간 유권자 서한 발송 시 주의',
+          desc: '비선거기간에 유권자에게 선거운동 성격의 서한을 발송하면 사전선거운동에 해당할 수 있습니다.',
+          law: '제254조(선거운동기간위반죄)', pen: '2년 이하 징역 또는 400만원 이하 벌금',
+          fix: '비선거기간에는 정책 의견 교환이나 의정보고서 형태로 작성하되, 투표 독려나 지지 호소 문구를 포함하지 마세요.'
+        });
+      }
+    }
+  }
+
   // 문자 길이 체크 (SMS vs MMS)
   if (currentAnalyzerTab === 'text' && text.length > 80) {
     const charCount = text.length;
@@ -4937,7 +5318,7 @@ function renderAnalysisResult(text, issues, period, usageInfo) {
       <div class="verdict-text">
         <h4>${verdict}</h4>
         <p>${verdictDesc}</p>
-        <p style="font-size:12px; margin-top:4px; opacity:0.7;">분석 기준: ${periodNames[period]} | 총 ${issues.length}개 항목 검출</p>
+        <p style="font-size:12px; margin-top:4px; opacity:0.7;">분석 기준: ${periodNames[period]} | 입력: ${currentAnalyzerTab === 'pdf' ? '📄 PDF 문서' : currentAnalyzerTab === 'image' ? '🖼️ 이미지' : '📝 텍스트'} | 총 ${issues.length}개 항목 검출</p>
       </div>
     </div>
   `;
@@ -4989,35 +5370,75 @@ function renderAnalysisResult(text, issues, period, usageInfo) {
   container.innerHTML = html;
   container.classList.add('show');
   container.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+  // 분석 이력 저장
+  saveAnalysisHistory(text, issues, period);
 }
 
-// 드래그 앤 드롭 이미지 지원
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() {
-    const dropArea = document.getElementById('analyzerImgDrop');
-    if (dropArea) {
-      ['dragenter','dragover','dragleave','drop'].forEach(ev => {
-        dropArea.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); });
-      });
-      dropArea.addEventListener('dragover', () => dropArea.style.borderColor = 'var(--primary)');
-      dropArea.addEventListener('dragleave', () => dropArea.style.borderColor = '');
-      dropArea.addEventListener('drop', e => {
-        dropArea.style.borderColor = '';
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = ev => {
-            document.getElementById('analyzerImgPreview').src = ev.target.result;
-            document.getElementById('analyzerImgPreview').style.display = 'block';
-            document.getElementById('analyzerImgPlaceholder').style.display = 'none';
-            dropArea.classList.add('has-image');
-          };
-          reader.readAsDataURL(file);
-        }
-      });
+function saveAnalysisHistory(text, issues, period) {
+  try {
+    const history = JSON.parse(localStorage.getItem('analyzerHistory') || '[]');
+    const dangers = issues.filter(i => i.severity === 'danger').length;
+    const warnings = issues.filter(i => i.severity === 'warning').length;
+    history.unshift({
+      date: new Date().toISOString(),
+      tab: currentAnalyzerTab,
+      textPreview: text.substring(0, 80) + (text.length > 80 ? '...' : ''),
+      dangers, warnings, total: issues.length,
+      period
+    });
+    if (history.length > 20) history.length = 20;
+    localStorage.setItem('analyzerHistory', JSON.stringify(history));
+    renderAnalyzerHistory();
+  } catch(e) {}
+}
+
+function renderAnalyzerHistory() {
+  const container = document.getElementById('analyzerHistory');
+  if (!container) return;
+  try {
+    const history = JSON.parse(localStorage.getItem('analyzerHistory') || '[]');
+    if (history.length === 0) {
+      container.innerHTML = '<p style="color:var(--gray-500); font-size:14px;">분석 이력이 없습니다.</p>';
+      return;
     }
-  }, 200);
-});
+    const periodNames = { normal:'비선거기간', pre:'예비후보자', main:'본선거' };
+    const tabIcons = { text:'📝', image:'🖼️', pdf:'📄' };
+    let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+    history.forEach((h, idx) => {
+      const d = new Date(h.date);
+      const dateStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+      const statusIcon = h.dangers > 0 ? '🚨' : h.warnings > 0 ? '⚠️' : '✅';
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray-50);border-radius:8px;font-size:13px;">
+        <span>${tabIcons[h.tab] || '📝'}</span>
+        <span style="color:var(--gray-500);min-width:70px;">${dateStr}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(h.textPreview)}</span>
+        <span>${statusIcon} ${h.dangers > 0 ? h.dangers + '건 위반' : h.warnings > 0 ? h.warnings + '건 주의' : '문제없음'}</span>
+      </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '<p style="color:var(--gray-500); font-size:14px;">이력 로드 실패</p>';
+  }
+}
+
+// 페이지 전환 시 이력 렌더링
+(function() {
+  const _origShow = typeof showPage === 'function' ? showPage : null;
+  if (_origShow) {
+    const _patchShowForHistory = showPage;
+    // showPage가 이미 정의된 후에 analyzer 페이지 전환 시 이력을 렌더링하도록 지연 패치
+    setTimeout(() => {
+      const origShow2 = showPage;
+      // analyzer 이력은 DOMContentLoaded에서 초기 렌더링
+    }, 100);
+  }
+})();
+
+document.addEventListener('DOMContentLoaded', function() { setTimeout(renderAnalyzerHistory, 500); });
+
+// (드래그 앤 드롭은 PDF 처리 섹션에서 통합 구현)
 
 // ====== 홈 타임라인 + 기간별 규정 요약 ======
 const homeElections = {
