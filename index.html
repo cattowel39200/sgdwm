@@ -2016,12 +2016,32 @@
 
 </div><!-- /container -->
 
-<!-- PDF.js CDN for PDF text extraction -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- PDF.js CDN for PDF text extraction (multi-source fallback) -->
 <script>
-if (typeof pdfjsLib !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-}
+(function() {
+  var VER = '2.16.105';
+  var sources = [
+    { js: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/' + VER + '/pdf.min.js', worker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/' + VER + '/pdf.worker.min.js' },
+    { js: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@' + VER + '/build/pdf.min.js', worker: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@' + VER + '/build/pdf.worker.min.js' },
+    { js: 'https://unpkg.com/pdfjs-dist@' + VER + '/build/pdf.min.js', worker: 'https://unpkg.com/pdfjs-dist@' + VER + '/build/pdf.worker.min.js' }
+  ];
+  var loaded = false;
+  function tryLoad(idx) {
+    if (idx >= sources.length || loaded) return;
+    var s = document.createElement('script');
+    s.src = sources[idx].js;
+    s.onload = function() {
+      if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = sources[idx].worker;
+        loaded = true;
+        console.log('[PDF.js] Loaded from source ' + (idx + 1));
+      } else { tryLoad(idx + 1); }
+    };
+    s.onerror = function() { console.warn('[PDF.js] Source ' + (idx + 1) + ' failed'); tryLoad(idx + 1); };
+    document.head.appendChild(s);
+  }
+  tryLoad(0);
+})();
 </script>
 
 <script>
@@ -4874,7 +4894,7 @@ async function extractPdfText(file) {
 
   try {
     if (typeof pdfjsLib === 'undefined') {
-      throw new Error('PDF.js 라이브러리를 로드할 수 없습니다. 인터넷 연결을 확인해 주세요.');
+      throw new Error('PDF.js 라이브러리를 로드할 수 없습니다. 인터넷 연결을 확인하거나, PDF 내용을 직접 복사하여 텍스트 입력란에 붙여넣어 주세요.');
     }
 
     const arrayBuffer = await file.arrayBuffer();
