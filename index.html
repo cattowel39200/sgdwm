@@ -406,12 +406,46 @@
   .pay-faq-q span { color: var(--primary); font-weight: 800; font-size: 15px; }
   .pay-faq-a { padding: 0 16px 0 40px; font-size: 13px; color: var(--gray-600); line-height: 1.7; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; }
   .pay-faq-item.open .pay-faq-a { max-height: 200px; padding: 0 16px 14px 40px; }
+  /* 햄버거 메뉴 버튼 */
+  .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 8px; margin-left: auto; flex-shrink: 0; z-index: 201; }
+  .hamburger span { display: block; width: 22px; height: 2px; background: var(--gray-700); margin: 5px 0; border-radius: 2px; transition: all 0.3s ease; }
+  .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+  .hamburger.active span:nth-child(2) { opacity: 0; }
+  .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+  .mobile-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+  .mobile-overlay.active { display: block; }
+
   @media (max-width: 768px) {
     .hero { padding: 32px 20px; } .hero h1 { font-size: 24px; }
     .calc-grid, .form-row, .form-row-3 { grid-template-columns: 1fr; }
     .stat-grid { grid-template-columns: 1fr 1fr; }
-    .nav-inner { padding: 0 12px; } .logo { font-size: 16px; margin-right: 12px; }
+    .nav-inner { padding: 0 12px; flex-wrap: wrap; }
+    .logo { font-size: 16px; margin-right: 0; }
     .container { padding: 20px 12px; }
+    .hamburger { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .nav-links {
+      display: none;
+      position: fixed;
+      top: 0; right: 0;
+      width: 260px; height: 100vh;
+      background: white;
+      flex-direction: column;
+      padding: 70px 16px 24px;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+      z-index: 200;
+      overflow-y: auto;
+      gap: 0;
+    }
+    .nav-links.mobile-open { display: flex; animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    .nav-link { padding: 14px 16px; border-bottom: 1px solid var(--gray-100); border-left: 3px solid transparent; font-size: 15px; text-align: left; white-space: normal; }
+    .nav-link.active { border-bottom: 1px solid var(--gray-100); border-left-color: var(--primary); background: var(--primary-light); }
+    .nav-link:hover { border-radius: 0; }
+    .user-bar { order: -1; width: 100%; justify-content: center; padding: 8px 0; gap: 6px; flex-wrap: wrap; }
+    .user-bar .user-name { display: none; }
+    .user-bar .user-btn { font-size: 12px; padding: 6px 10px; }
+    .user-bar .role-badge { font-size: 10px; padding: 3px 8px; }
+    .user-bar .plan-badge-pro, .user-bar .plan-badge-team { font-size: 9px; }
     .reg-tabs { flex-direction: column; }
     .reg-tab:not(:last-child) { border-right: none; border-bottom: 1px solid var(--gray-200); }
     .analyzer-tabs { flex-direction: column; }
@@ -428,7 +462,6 @@
     .home-period-header { flex-wrap: wrap; }
     .auth-body { padding: 20px; }
     .auth-header { padding: 24px 20px; }
-    .user-bar .user-name { display: none; }
     .staff-item { flex-wrap: wrap; }
     .staff-actions { width: 100%; justify-content: flex-end; margin-top: 8px; }
     .perm-grid { grid-template-columns: 1fr 1fr; }
@@ -437,6 +470,19 @@
     .admin-stats-grid { grid-template-columns: repeat(2, 1fr); }
     .admin-tab-content .info-table { font-size: 12px; }
     .admin-chart-row { grid-template-columns: 1fr; }
+    .check-item label { min-width: auto; }
+    .pay-guide-item { flex-direction: column; gap: 8px; }
+    .tool-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .tool-card { padding: 16px; }
+    .tool-icon { font-size: 28px; margin-bottom: 8px; }
+  }
+
+  @media (max-width: 480px) {
+    .stat-grid { grid-template-columns: 1fr; }
+    .tool-grid { grid-template-columns: 1fr; }
+    .perm-grid { grid-template-columns: 1fr; }
+    .admin-stats-grid { grid-template-columns: 1fr; }
+    .countdown-numbers { gap: 8px; }
   }
   /* 관리자 버튼 (별도 — 항상 표시) */
   #adminBtnWrap { display: flex; margin-left: 4px; }
@@ -550,7 +596,10 @@
   <div class="nav-inner">
     <div class="party-indicator" id="partyIndicator" style="display:none;"></div>
     <div class="logo" onclick="showPage('home')">선거<span>도우미</span></div>
-    <div class="nav-links">
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-links" id="navLinks">
       <button class="nav-link active" data-page="home">홈</button>
       <button class="nav-link" data-page="calculator">비용 계산기</button>
       <button class="nav-link" data-page="timeline">선거 일정</button>
@@ -564,6 +613,7 @@
       <button class="user-btn" onclick="showPage('login')">로그인</button>
       <button class="user-btn" onclick="showPage('register')" style="background:var(--primary);color:white;border-color:var(--primary);">회원가입</button>
     </div>
+    <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
   </div>
 </nav>
 
@@ -804,7 +854,7 @@
 <!-- ==================== PRICING ==================== -->
 <div id="page-pricing" class="page">
   <h2 style="font-size:24px; margin-bottom:4px;">💎 요금제 선택</h2>
-  <p style="color:var(--gray-500); margin-bottom:24px;">설치 후 <strong>7일간 모든 기능을 무료</strong>로 체험하실 수 있습니다. 체험 후 필요에 맞는 요금제를 선택하세요.</p>
+  <p style="color:var(--gray-500); margin-bottom:24px;">설치 후 <strong>3개월간 모든 기능을 무료</strong>로 이용하실 수 있습니다. 이용 기간 종료 후 필요에 맞는 요금제를 선택하세요.</p>
 
   <!-- 체험 기간 배너 -->
   <div id="trialBanner"></div>
@@ -986,8 +1036,8 @@
           <div class="pay-guide-item">
             <span class="pay-guide-icon" style="background:#d1fae5;color:#10b981;">🎁</span>
             <div>
-              <strong>설치 후 7일간 모든 기능 무료</strong>
-              <p>설치(첫 접속) 시점부터 7일간 프로·팀 요금제의 모든 프리미엄 기능을 무료로 체험하실 수 있습니다. 별도의 카드 등록이나 결제 없이 자동으로 시작됩니다.</p>
+              <strong>설치 후 3개월간 모든 기능 무료</strong>
+              <p>설치(첫 접속) 시점부터 3개월(90일)간 모든 기능을 무료로 이용하실 수 있습니다. 별도의 카드 등록이나 결제 없이 자동으로 시작됩니다.</p>
             </div>
           </div>
           <div class="pay-guide-item">
@@ -1001,7 +1051,7 @@
             <span class="pay-guide-icon" style="background:#fef3c7;color:#f59e0b;">⏰</span>
             <div>
               <strong>체험 종료 후</strong>
-              <p>7일 체험 종료 후에는 무료(Free) 플랜으로 자동 전환됩니다. 기본 기능(타임라인, 규정 안내, 비용 계산기, 분석기 3회/일)은 계속 무료로 이용 가능합니다. 프리미엄 기능을 계속 사용하시려면 유료 요금제를 선택해 주세요.</p>
+              <p>3개월 무료 이용 종료 후 유료 요금제를 선택하시면 계속 이용 가능합니다. 종료 후에도 기본 기능은 무료로 이용할 수 있습니다.</p>
             </div>
           </div>
         </div>
@@ -1147,7 +1197,7 @@
           </div>
           <div class="pay-faq-item" onclick="toggleFaq(this)">
             <div class="pay-faq-q"><span>Q.</span> 무료 체험 기간이 있나요?</div>
-            <div class="pay-faq-a">네, 설치(첫 접속) 후 7일간 모든 프리미엄 기능을 무료로 이용하실 수 있습니다. 카드 등록 없이 자동으로 시작되며, 체험 종료 후에도 기본 기능(타임라인·규정·계산기)은 계속 무료입니다.</div>
+            <div class="pay-faq-a">네, 설치(첫 접속) 후 3개월(90일)간 모든 기능을 무료로 이용하실 수 있습니다. 카드 등록 없이 자동으로 시작되며, 종료 후에도 기본 기능은 계속 무료입니다.</div>
           </div>
           <div class="pay-faq-item" onclick="toggleFaq(this)">
             <div class="pay-faq-q"><span>Q.</span> 결제가 실패하면 어떻게 되나요?</div>
@@ -1896,8 +1946,36 @@ function showPage(page) {
   const btn = document.querySelector('[data-page="'+page+'"]');
   if(btn) btn.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  // 모바일 메뉴 자동 닫기
+  closeMobileMenu();
 }
 navLinks.forEach(link => link.addEventListener('click', () => showPage(link.dataset.page)));
+
+// 모바일 햄버거 메뉴
+function toggleMobileMenu() {
+  const navEl = document.getElementById('navLinks');
+  const burger = document.getElementById('hamburgerBtn');
+  const overlay = document.getElementById('mobileOverlay');
+  const isOpen = navEl.classList.contains('mobile-open');
+  if (isOpen) {
+    closeMobileMenu();
+  } else {
+    navEl.classList.add('mobile-open');
+    burger.classList.add('active');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+}
+function closeMobileMenu() {
+  const navEl = document.getElementById('navLinks');
+  const burger = document.getElementById('hamburgerBtn');
+  const overlay = document.getElementById('mobileOverlay');
+  if (!navEl) return;
+  navEl.classList.remove('mobile-open');
+  burger.classList.remove('active');
+  overlay.classList.remove('active');
+  document.body.style.overflow = '';
+}
 
 // ========== 보안 유틸리티 ==========
 // XSS 방지: HTML 이스케이프
@@ -3368,12 +3446,12 @@ showPage = function(page) {
 document.addEventListener('DOMContentLoaded', initAuth);
 
 // ========== 요금제 (PRICING) ==========
-// 무료 배포 모드: 설치 후 7일간 모든 기능 무료 체험
-const TRIAL_DAYS = 7;
+// 무료 배포 모드: 설치 후 3개월(90일)간 모든 기능 무료 이용
+const TRIAL_DAYS = 90;
 const planConfig = {
   free:  { label:'무료(Free)', icon:'🆓', price:0, monthly:0, color:'var(--gray-500)',
-    features:{ timeline:true, regulations:true, calculator:true, analyzer:3, pledge:false, checklist:false, profile:false, staffLimit:1, online:false, roleManage:false, exportXls:false } },
-  trial: { label:'무료 체험', icon:'🎁', price:0, monthly:0, color:'#10b981',
+    features:{ timeline:true, regulations:true, calculator:true, analyzer:999, pledge:true, checklist:true, profile:true, staffLimit:5, online:true, roleManage:true, exportXls:true } },
+  trial: { label:'무료 이용', icon:'🎁', price:0, monthly:0, color:'#10b981',
     features:{ timeline:true, regulations:true, calculator:true, analyzer:999, pledge:true, checklist:true, profile:true, staffLimit:5, online:true, roleManage:true, exportXls:true } },
   pro:   { label:'프로(Pro)', icon:'⭐', price:19000, monthly:19000, color:'#f59e0b',
     features:{ timeline:true, regulations:true, calculator:true, analyzer:999, pledge:true, checklist:true, profile:true, staffLimit:5, online:false, roleManage:false, exportXls:false } },
